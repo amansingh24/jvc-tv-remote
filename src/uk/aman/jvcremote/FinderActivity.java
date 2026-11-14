@@ -45,12 +45,7 @@ public class FinderActivity extends Activity implements Remote.Listener {
         super.onCreate(savedInstanceState);
         remote = Remote.get(this);
 
-        IrCodes.CodeSet set = remote.set();
-        Integer power = set.commands.get("Power"), menu = set.commands.get("Menu");
-        for (int c = 0; c < set.commandRange(); c++) {
-            if ((power != null && c == power) || (menu != null && c == menu)) continue;
-            codes.add(c);
-        }
+        orderCodes(remote.set());
 
         LinearLayout root = Ui.column(this);
         int pad = Ui.dp(this, 16);
@@ -62,8 +57,9 @@ public class FinderActivity extends Activity implements Remote.Listener {
                 + "2. Point the phone at the TV and tap Next (or Auto). Each tap tries a different code.\n"
                 + "3. When the highlight on the TV moves, tap the direction it moved below. "
                 + "That code is then used for that button.\n\n"
-                + "Some codes may change the picture, input or channel. That's harmless: "
-                + "reopen the menu and carry on. Power is never sent.", 14, Ui.MUTED);
+                + "The most likely codes come first. If the TV menu closes, reopen it and tap Again. "
+                + "Some codes may change the picture, input or channel, which is harmless. "
+                + "Power is never sent.", 14, Ui.MUTED);
         help.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
         root.addView(help);
 
@@ -114,6 +110,34 @@ public class FinderActivity extends Activity implements Remote.Listener {
 
         updateLabel();
         showLearned();
+    }
+
+    /**
+     * Likely navigation codes first; codes that close the TV menu (numbers, Back, Exit, Source,
+     * Home, channel) last, so a search isn't cut short. Power and Menu are never sent.
+     */
+    private void orderCodes(IrCodes.CodeSet set) {
+        List<Integer> skip = new ArrayList<>(), first = new ArrayList<>(), last = new ArrayList<>();
+        addCommands(set, skip, "Power", "Menu");
+        addCommands(set, first, "Up", "Down", "Left", "Right", "OK");
+        if (set.protocol == IrCodes.Protocol.RC5) {
+            first.addAll(java.util.Arrays.asList(0x50, 0x51, 0x55, 0x56, 0x57)); // Philips menu cursor codes
+        }
+        addCommands(set, last, "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+                "Back", "Exit", "Source", "Home", "Ch+", "Ch-");
+
+        for (int c : first) if (!skip.contains(c) && !codes.contains(c)) codes.add(c);
+        for (int c = 0; c < set.commandRange(); c++) {
+            if (!skip.contains(c) && !last.contains(c) && !codes.contains(c)) codes.add(c);
+        }
+        for (int c : last) if (!skip.contains(c) && !codes.contains(c)) codes.add(c);
+    }
+
+    private static void addCommands(IrCodes.CodeSet set, List<Integer> into, String... buttons) {
+        for (String b : buttons) {
+            Integer c = set.commands.get(b);
+            if (c != null) into.add(c);
+        }
     }
 
     private Button action(String label, int color, final Runnable run) {

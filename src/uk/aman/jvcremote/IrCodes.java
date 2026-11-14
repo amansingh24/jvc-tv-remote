@@ -83,8 +83,21 @@ final class IrCodes {
 
     // --- Encoders -------------------------------------------------------------------------
 
-    /** Philips RC5: 14 Manchester-coded bits of 1.778ms, 36kHz carrier. */
+    /** Philips RC5, sent twice at the standard 113.8ms frame period like a real remote's short
+     *  press (same toggle bit, so the TV treats the second frame as part of the same press). */
     static int[] rc5(int address, int command, boolean toggle) {
+        int[] frame = rc5Frame(address, command, toggle);
+        int length = 0;
+        for (int d : frame) length += d;
+        int[] out = new int[frame.length * 2 + 1];
+        System.arraycopy(frame, 0, out, 0, frame.length);
+        out[frame.length] = 113778 - length; // frames always end on "on", so this is the gap
+        System.arraycopy(frame, 0, out, frame.length + 1, frame.length);
+        return out;
+    }
+
+    /** One RC5 frame: 14 Manchester-coded bits of 1.778ms, 36kHz carrier. */
+    static int[] rc5Frame(int address, int command, boolean toggle) {
         final int half = 889;
         int field = command < 64 ? 1 : 0; // second start bit doubles as command bit 6, inverted
         int frame = (1 << 13) | (field << 12) | ((toggle ? 1 : 0) << 11)
