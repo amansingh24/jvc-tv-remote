@@ -1,0 +1,5 @@
+out/
+*.apk
+release.keystore
+release.keystore.pass
+*.idsig
