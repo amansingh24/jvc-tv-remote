@@ -6,7 +6,9 @@ A tiny Android app that turns a phone with an IR blaster (e.g. Galaxy S6 / S6 ed
 
 ## Using it
 
-Point the top of the phone at the TV, pick **Set 1** and press **Menu**. If nothing happens, try Set 2, 3 and 4. The app remembers the set that works.
+Point the top of the phone at the TV and press **Menu**. If nothing happens, open **Settings → Code set** and try Sets 2, 3 and 4. The app remembers the set that works.
+
+If some buttons (e.g. the arrows) don't work on your model, use **Settings → Find buttons that don't work**: open the TV menu, tap **Next** (or **Auto**) to try codes one at a time, and when the highlight moves tap which way it moved. The app then uses that code for the button. Power and Menu are never sent while searching.
 
 | Set | For | Protocol |
 |-----|-----|----------|

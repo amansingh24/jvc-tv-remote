@@ -27,14 +27,17 @@ final class IrCodes {
             return protocol == Protocol.RC5 ? 36000 : 38000;
         }
 
-        /** Microsecond on/off pattern starting with "on", or null if this set has no such button. */
-        int[] pattern(String button, boolean toggle) {
-            Integer cmd = commands.get(button);
-            if (cmd == null) return null;
+        /** Number of possible command codes, for stepping through them in the button finder. */
+        int commandRange() {
+            return protocol == Protocol.RC5 ? 128 : 256;
+        }
+
+        /** Microsecond on/off pattern starting with "on". */
+        int[] pattern(int command, boolean toggle) {
             switch (protocol) {
-                case RC5: return rc5(address, cmd, toggle);
-                case SAMSUNG32: return samsung32(address, cmd);
-                default: return jvc(address, cmd);
+                case RC5: return rc5(address, command, toggle);
+                case SAMSUNG32: return samsung32(address, command);
+                default: return jvc(address, command);
             }
         }
     }
